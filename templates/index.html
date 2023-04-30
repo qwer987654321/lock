@@ -1,0 +1,139 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+    	<meta name="viewport" content="width=device-width, initaial-scale=1">
+    	<title>新增訂單</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    	<script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+        <script src="https://www.gstatic.com/firebasejs/5.5.6/firebase.js"></script>
+        <script>
+            var YourLiffAppId = '1660846886-DkAYQvdM';
+            var profileInfo = "";
+            var userId = "";
+            var config = {
+                    apiKey:"AIzaSyCBJjlHRCgHSIAe2Y5ROmcrVaowQ4d_2cc",
+                    authDomain: "esp32-lock-project.firebaseapp.com",
+                    databaseURL: "https://esp32-lock-project-default-rtdb.firebaseio.com",
+                    projectId: "esp32-lock-project",
+                    storageBucket: "esp32-lock-project.appspot.com",
+                    messagingSenderId:"53558472426",
+                };
+            // 初始化 Firebase
+            firebase.initializeApp(config);
+            function makeid(length) {
+                var result = '';
+                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                const charactersLength = characters.length;
+                for ( var i = 0; i < length; i++ ) {
+                  result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                }
+                return result;
+            }
+            //console.log(makeid(5));
+            //console.log(typeof makeid(5));
+
+            function initFirebase(){
+                var path = "user_info/"+userId+"/all_lock/";
+                var db = firebase.database().ref(path);
+                db.on("child_added", function (snapshot) {
+                    if(typeof snapshot.val().name === 'undefined') {
+                      alert('未新增鎖\n如是房東請先去設定鎖');
+                      liff.closeWindow();
+                    }else{
+                        var select = document.getElementById("lock_available"); 
+                        var option = document.createElement("option"); 
+                        option.setAttribute("value",snapshot.key);
+                        option.appendChild(document.createTextNode(snapshot.val().name)); 
+                        select.appendChild(option);
+                        select[0].selected=true;
+                    }
+                });
+            }
+            function initializeApp(){
+		    	if (!liff.isLoggedIn()) { // 如果Line用戶沒有登入，就必須事先登入
+                  	liff.login();
+                }else{
+                    liff.getProfile().then(
+                    (profile) => {
+                        userId = profile.userId;
+                        initFirebase()
+                    }
+                );
+                } 		 
+            } 
+            function initializeLiff(myLiffId){
+                liff
+                    .init({
+                        liffId: myLiffId
+                    })
+                    .then(() => {                   
+                        initializeApp(); //取得LIFF各種物件及屬性
+                    })
+                    .catch((err) => {
+                        alert(JSON.stringify(err));
+                    });
+            }
+            function pushMsg(date_start, date_end, lock_available, number) {
+	        	if (date_start == '' || date_end == '' || lock_available == '' || number == '') {  //資料檢查
+                    alert('每個項目都必須輸入！');
+	        		return;
+	        	}
+                var lock_ava = {};
+                $("#lock_available").find(":selected").each(function () {
+                    //lock_ava = lock_ava +"\"" + this.text + "\":\"" + this.value + "\",";
+                    lock_ava[this.text] = this.value;
+                });
+                //firebase建立訂單
+                console.log(lock_ava);
+                var order_number = makeid(5)
+                var db = firebase.database().ref("所有訂單/"+order_number);
+                db.set({
+                    "租約開始時間": date_start, 
+                    "租約結束時間": date_end, 
+                    "可使用所有鎖": lock_ava, 
+                    "分享人數限制": number, 
+                    "房東ID": userId, 
+                    "簽約人":"無"
+                });
+                //--------------------------
+	        	liff.sendMessages([  //推播訊息
+	        		{ type: 'text',
+	        		  text: "訂單編號:"+order_number
+	        		}
+	        	])
+	        		.then(() => {
+	        			liff.closeWindow();  //關閉視窗
+	        		});
+	        }
+	        $(document).ready(function () {
+                initializeLiff(YourLiffAppId); 
+	        	$('#ack').click(function (e) {  //按下確定鈕
+	        		pushMsg($('#date_start').val(), $('#date_end').val(), $('#lock_available').val(), $('#number').val());
+	        	});
+	        });
+    	</script>
+    </head>
+    <body>
+    	<h1>新增訂單</h1>
+    	<p></p>
+        <div class="row" style="margin: 10px">
+            <div class="col-12" style="margin: 10px">
+                <label>租約開始時間</label>
+                <input type="date" id="date_start" value="" class="form-control" />
+                <br />
+                <label>租約結束時間</label>
+                <input type="date" id="date_end" value="" class="form-control" />
+                <br />
+                <label>可使用鎖</label>
+                <select id="lock_available" class="form-control" multiple = true>
+                </select>
+                <br />
+                <label>分享人數限制</label>
+                <input type="number" id="number" class="form-control" />
+                <br />
+                <button class="btn btn-warning btn-block" id="ack">確定</button>
+            </div>
+        </div>
+    </body>
+</html>

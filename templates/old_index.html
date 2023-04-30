@@ -1,0 +1,129 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+	<title>LIFF Starter</title>
+	<mrta name="viewport" content="width=device-width, initaial-scale=1">
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+	<script type="text/javascript">
+		var liffid="1654179060-wZQGWBWn"
+
+		$(document).ready(function(){
+			initializeLiff(liffid);
+		});
+
+		function initializeLiff(myid){
+			liff
+				.init({
+					liffId:myid
+				})
+				
+		}
+	</script>
+
+</head>
+<body>
+	<h1>Hello,your name is ?</h1>
+	<p></p>
+	<form action="/say_hello" method="post">
+		<label>Name:</label>
+		<input type="textbox" name="username">
+		<input type="submit" name="Submit">
+		
+	</form>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>LIFF sdk 訊息傳送測試</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- bootstrap 4.3.1 -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+   <style>
+       #MainDiv button {
+           margin:3px;
+       }
+   </style>
+    <script>
+        //你的liff app ID, 例如 --> 0000000000-spPeRmAn
+        var YourLiffAppId = '1654179060-wZQGWBWn';
+        $(document).ready(function () {
+            //初始 LIFF SDK
+            initializeLiff(YourLiffAppId);           
+            
+             //取得用戶資訊
+            $('#ButtonGetProfile').click(() => {
+                //取得User Proile
+                liff.getProfile().then(
+                    (profile) => {
+                        //顯示在text box中
+                        var profileInfo = "name: " + profile.displayName + 
+                        "\nuserId: " + profile.userId + 
+                        "\npictureUrl: " + profile.pictureUrl 
+                        $('#field_info').val( profileInfo);                       
+                      }
+                    );
+            }); 
+            $('#ButtonSendImageMsg').click(function () {							
+                  liff.sendMessages([{
+                   type: 'image',
+                   originalContentUrl: 'https://i.imgur.com/dnIecXj.jpg',
+                   previewImageUrl: 'https://i.imgur.com/dnIecXj.jpg'
+                  }])
+                 .then(() => {
+                        liff.closeWindow();
+                    })        
+            });
+             $('#ButtonSendTextMsg').click(function () {							
+                  liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: 'help'                        
+                    }
+                  ])
+                    .then(() => {
+                        liff.closeWindow();
+                    })                
+            });    
+           
+        });           
+        
+        function initializeLiff(myLiffId){
+            liff
+                .init({
+                    liffId: myLiffId
+                })
+                .then(() => {                   
+                    initializeApp(); //取得LIFF各種物件及屬性
+                })
+                .catch((err) => {
+                    alert(JSON.stringify(err));
+                });
+        }
+        
+        function initializeApp(){
+			if (!liff.isLoggedIn()) { // 如果Line用戶沒有登入，就必須事先登入
+              	liff.login();
+            } 				 
+         }            
+    </script>
+</head>
+<body>
+    <div class="row">		
+        <div id="MainDiv" class="col-md-6" style="margin:5px">           
+            <!-- <img src="static/hand.png" width="32" height="32"> -->             			
+            
+             <button class="btn btn-primary" id="ButtonSendTextMsg">傳送文字訊息</button> 
+             <button class="btn btn-primary" id="ButtonSendImageMsg">傳送圖片訊息</button><br>                       
+           
+        </div>
+    </div>
+</body>
+</html>
